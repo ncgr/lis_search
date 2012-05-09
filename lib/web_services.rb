@@ -1,7 +1,6 @@
 require 'nokogiri'
 require 'uri'
 require 'open-uri'
-require 'json'
 require 'web_services/soybase'
 
 module WebServices

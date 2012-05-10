@@ -20,6 +20,7 @@ LisSearch.SearchSoybasesView = Ember.View.extend({
     }).fail(function(e) {
       alert(e);
     }).done(function(data) {
+      LisSearch.soybasesController.clearAll();
       LisSearch.soybasesController.loadAll(data);
     });
   }

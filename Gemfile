@@ -15,5 +15,6 @@ gem 'ember-rails'
 gem 'twitter-bootstrap-rails'
 
 group :development do
+  gem 'thin'
   gem 'debugger', :require => 'debugger'
 end

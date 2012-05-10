@@ -3,7 +3,7 @@ module WebServices
 
     def initialize(query)
       query = CGI.escape(query.to_s)
-      @uri  = WebServices.configuration.uris[:soybase] << query
+      @uri  = WebServices.configuration.uris[:soybase] + query
       @doc  = Nokogiri::XML(open(@uri)) do |config|
         config.noblanks
       end

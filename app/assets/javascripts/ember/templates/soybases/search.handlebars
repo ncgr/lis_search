@@ -1,4 +1,4 @@
 {{#with soybase}}
   {{view Ember.TextField placeholder="Keyword Search..." valueBinding="q"}}
-  <button type="submit">Search</button>
+  <button type="submit" {{action "submit" on="click"}}>Search</button>
 {{/with}}

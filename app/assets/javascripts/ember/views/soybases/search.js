@@ -17,8 +17,6 @@ LisSearch.SearchSoybasesView = Ember.View.extend({
       type: 'GET',
       url: soybase.resourceUrl,
       data: "q=" + soybase.q,
-    }).fail(function(e) {
-      alert(e);
     }).done(function(data) {
       LisSearch.soybasesController.clearAll();
       LisSearch.soybasesController.loadAll(data);

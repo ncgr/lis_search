@@ -12,6 +12,8 @@
 //
 //= require jquery
 //= require jquery_ujs
+//= require d3.v2
+//= require underscore
 //= require twitter/bootstrap
 //= require ember
 //= require ember-rest

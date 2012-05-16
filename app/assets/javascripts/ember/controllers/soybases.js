@@ -36,13 +36,6 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       .attr("fill", function(d, i) { return color(i); })
       .attr("d", arc);
 
-    arcs.append("text")
-      .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
-      .attr("dy", ".35em")
-      .attr("text-anchor", "middle")
-      .attr("display", function(d) { return d.value > .15 ? null : "none"; })
-      .text(function(d, i) { return sliceNames[i]; });
-
     paths.transition()
       .ease("bounce")
       .duration(2000)

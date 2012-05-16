@@ -1,1 +1,11 @@
-<div id="search-results"></div>
+<table>
+  <tr>
+    <th>Map Symbol</th>
+    <th>Trait Name</th>
+    <th>Qtl Url</th>
+    <th>Qtl Map Url</th>
+  </tr>
+  {{#each soybases}}
+    {{view LisSearch.ShowSoybasesView soybaseBinding="this"}}
+  {{/each}}
+</table>

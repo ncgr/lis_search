@@ -1,0 +1,42 @@
+#search-results {
+  padding-top: 75px;
+  width: 800px;
+}
+
+#search-results svg {
+  width: 450px;
+  float: left;
+}
+
+#search-results svg .total {
+  font-size: 26px;
+  font-weight: bold;
+}
+
+#search-results svg .total-label {
+  fill: gray;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+#search-results svg .label {
+  fill: gray;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+#search-results svg .value {
+  fill: gray;
+  font-size: 12px;
+}
+
+#legend svg {
+  margin-top: 125px;
+  float: right;
+  width: 325px;
+}
+
+#legend .label {
+  fill: gray;
+  font-size: 12px;
+}

@@ -21,6 +21,7 @@ LisSearch.SearchSoybasesView = Ember.View.extend({
       LisSearch.soybasesController.clearAll();
       LisSearch.soybasesController.loadAll(data);
       LisSearch.soybasesController.get('graph');
+      LisSearch.soybasesController.get('icicle');
     });
   }
 });

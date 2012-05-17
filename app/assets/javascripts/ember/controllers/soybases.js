@@ -6,7 +6,6 @@ LisSearch.soybasesController = Ember.ResourceController.create({
   },
 
   graph: function() {
-    this.clearGraph();
     var data = this.get('content');
     var groups =  _.groupBy(data, function(s) {
       return s.trait_name.toLowerCase();
@@ -28,10 +27,14 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       arc = d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius),
       donut = d3.layout.pie();
 
-    var vis = d3.select("#search-results").append("svg")
+    var vis = d3.select("#search-results").append("div")
+      .attr("class", "results")
+      .attr("title", "Click to remove")
+      .on("click", function() { $(this).slideUp('slow'); })
+      .append("svg")
+      .attr("class", "graph")
       .data([data])
-      .attr("width", width)
-      .attr("height", height);
+      .attr("width", width);
 
     var arcs = vis.selectAll("g.arc")
       .data(donut)
@@ -70,9 +73,8 @@ LisSearch.soybasesController = Ember.ResourceController.create({
         }
       });
 
-    var legend = d3.select("#search-results").append("div")
-      .attr("id", "legend")
-      .append("svg")
+    var legend = d3.select(".results:last-child").append("svg")
+      .attr("class", "legend")
       .data([data])
       .attr("width", 325);
 

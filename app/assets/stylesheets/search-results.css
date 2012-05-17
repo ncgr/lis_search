@@ -1,42 +1,45 @@
 #search-results {
-  padding-top: 75px;
   width: 800px;
 }
 
-#search-results svg {
+.results {
+  clear: both;
+  height: 400px;
+}
+
+.graph svg {
   width: 450px;
   float: left;
 }
 
-#search-results svg .total {
+.total {
   font-size: 26px;
   font-weight: bold;
 }
 
-#search-results svg .total-label {
+.total-label {
   fill: gray;
   font-size: 22px;
   font-weight: bold;
 }
 
-#search-results svg .label {
+.label {
   fill: gray;
   font-size: 12px;
   font-weight: bold;
 }
 
-#search-results svg .value {
+.value {
   fill: gray;
   font-size: 12px;
 }
 
-#legend svg {
+.label {
+  fill: gray;
+  font-size: 12px;
+}
+
+.legend {
   margin-top: 125px;
   float: right;
-  width: 325px;
-}
-
-#legend .label {
-  fill: gray;
-  font-size: 12px;
 }

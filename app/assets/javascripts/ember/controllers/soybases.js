@@ -3,41 +3,6 @@ LisSearch.soybasesController = Ember.ResourceController.create({
 
   color: d3.scale.category20(),
 
-  formatLinkageGroup: function(data) {
-    var lg = [];
-    var g = _.groupBy(data, function(d) { return d.map[0].linkage_group; });
-    _.each(g, function(v, k) {
-      lg.push({
-        "name": k,
-        "size": v.length
-      });
-    });
-
-    return lg;
-  },
-
-  formatData: function(data) {
-    var self = this;
-
-    var formatted = {
-      "name": "QTLs",
-      "children": []
-    };
-
-    groups = _.groupBy(data, function(g) {
-      return g.trait_name.toLowerCase().underscore();
-    });
-
-    _.each(groups, function(v, k) {
-     formatted["children"].push({
-       "name": k,
-       "children": self.formatLinkageGroup(v)
-     });
-    });
-
-    return formatted;
-  },
-
   graph: function() {
     var self = this;
 
@@ -137,56 +102,112 @@ LisSearch.soybasesController = Ember.ResourceController.create({
 
   }.property('graph'),
 
+  formatLinkageGroup: function(data) {
+    var lg = [];
+    var g = _.groupBy(data, function(d) { return d.map[0].linkage_group; });
+    _.each(g, function(v, k) {
+      lg.push({
+        "name": k,
+        "size": v.length
+      });
+    });
+
+    return lg;
+  },
+
+  formatData: function(data) {
+    var self = this;
+
+    var formatted = {
+      "name": "QTLs",
+      "children": []
+    };
+
+    groups = _.groupBy(data, function(g) {
+      return g.trait_name.toLowerCase().underscore();
+    });
+
+    _.each(groups, function(v, k) {
+     formatted["children"].push({
+       "name": k,
+       "children": self.formatLinkageGroup(v)
+     });
+    });
+
+    return formatted;
+  },
+
+
   icicle: function() {
     var self = this;
 
     var groups = self.formatData(self.get('content'));
 
     var width = 800,
-      height = 250;
+        height = 400,
+        x = d3.scale.linear().range([0, width]),
+        y = d3.scale.linear().range([0, height]);
 
-    var x = d3.scale.linear()
-      .range([0, width]);
-
-    var y = d3.scale.linear()
-      .range([0, height]);
-
-    var vis = d3.select(".results:last-child").append("svg")
+    var vis = d3.select(".results:last-child").append("div")
+      .attr("class", "icicle")
+      .style("width", width + "px")
+      .style("height", height + "px")
+      .append("svg:svg")
       .attr("width", width)
       .attr("height", height);
 
     var partition = d3.layout.partition()
       .value(function(d) { return d.size; });
 
-    var rects = vis.data([groups]).selectAll("g")
-      .data(partition.nodes)
-      .enter().append("g")
-      .attr("class", "rect")
-      .append("rect")
-      .attr("x", function(d) { return x(d.x); })
-      .attr("y", function(d) { return y(d.y); })
-      .attr("width", function(d) { return x(d.dx); })
-      .attr("height", function(d) { return y(d.dy); })
-      .attr("fill", function(d) { return self.color((d.children ? d : d.parent).name); })
-      .on("click", function(d) {
-        x.domain([d.x, d.x + d.dx]);
-        y.domain([d.y, 1]).range([d.y ? 20 : 0, height]);
+    var g = vis.selectAll("g")
+      .data(partition.nodes(groups))
+      .enter().append("svg:g")
+      .attr("class", "icicle-node")
+      .attr("transform", function(d) { return "translate(" + x(d.y) + "," + y(d.x) + ")"; })
+      .on("click", click);
 
-        rects.transition()
-        .duration(750)
-        .attr("x", function(d) { return x(d.x); })
-        .attr("y", function(d) { return y(d.y); })
-        .attr("width", function(d) { return x(d.x + d.dx) - x(d.x); })
-        .attr("height", function(d) { return y(d.y + d.dy) - y(d.y); });
-      });
+    var kx = width / groups.dx,
+      ky = height / 1;
 
-    vis.selectAll("g")
-      .data(partition.nodes)
-      .append("text")
+    g.append("svg:rect")
+      .attr("width", groups.dy * kx)
+      .attr("height", function(d) { return d.dx * ky; })
+      .attr("class", function(d) { return d.children ? "parent" : "child"; })
+      .on("click", function(d) { click(d); });
+
+    g.append("svg:text")
+      .attr("transform", function(d) { return "translate(8," + d.dx * ky / 2 + ")"; })
       .attr("dy", ".35em")
-      .attr("transform", function(d) { return "translate(10," + d.dx * y(d.dy)/d.dx / 2 + ")" })
-      .style("display", function(d) { return (d.dx * y(d.dy)) > 15 ? null : "none" })
-      .text(function(d) { return d.name });
+      .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; })
+      .text(function(d) { return d.name === "" ? "unknown" : d.name; });
+
+    var click = function(d) {
+      if (!d.children) {
+        return;
+      }
+
+      kx = (d.y ? width - 40 : width) / (1 - d.y);
+      ky = height / d.dx;
+      x.domain([d.y, 1]).range([d.y ? 40 : 0, width]);
+      y.domain([d.x, d.x + d.dx]);
+
+      var t = g.transition()
+        .duration(750)
+        .attr("transform", function(d) { return "translate(" + x(d.y) + "," + y(d.x) + ")"; });
+
+      t.select("rect")
+        .attr("width", d.dy * kx)
+        .attr("height", function(d) { return d.dx * ky; });
+
+      t.select("text")
+        .attr("transform", transform)
+        .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; });
+
+    }
+
+    var transform = function(d) {
+      return "translate(8," + d.dx * ky / 2 + ")";
+    }
 
   }.property('icicle')
 });

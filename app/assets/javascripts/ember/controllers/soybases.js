@@ -177,7 +177,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       .attr("transform", function(d) { return "translate(8," + d.dx * ky / 2 + ")"; })
       .attr("dy", ".35em")
       .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; })
-      .text(function(d) { return d.name === "" ? "unknown" : d.name; });
+      .text(function(d) { return d.name === "" ? "unknown" : d.name.replace("_", " "); });
 
     var click = function(d) {
       if (!d.children) {

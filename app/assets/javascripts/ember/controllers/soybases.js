@@ -1,6 +1,8 @@
 LisSearch.soybasesController = Ember.ResourceController.create({
   resourceType: LisSearch.Soybase,
 
+  color: d3.scale.category20(),
+
   formatLinkageGroup: function(data) {
     var lg = [];
     var g = _.groupBy(data, function(d) { return d.map[0].linkage_group; });
@@ -37,6 +39,8 @@ LisSearch.soybasesController = Ember.ResourceController.create({
   },
 
   graph: function() {
+    var self = this;
+
     var data = this.get('content');
 
     var groups =  _.groupBy(data, function(s) {
@@ -62,7 +66,6 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       outerRadius = Math.min(width, height) / 2,
       innerRadius = outerRadius * 0.4,
       data = slices,
-      color = d3.scale.category20(),
       arc = d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius),
       donut = d3.layout.pie();
 
@@ -99,7 +102,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       .text(total);
 
     var paths = arcs.append("path")
-      .attr("fill", function(d, i) { return color(i); })
+      .attr("fill", function(d, i) { return self.color(i); })
       .attr("d", arc);
 
     paths.transition()
@@ -124,7 +127,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
         .attr("y", i * 20)
         .attr("width", 10)
         .attr("height", 10)
-        .attr("fill", function(d, k) { return color(i) });
+        .attr("fill", function(d, k) { return self.color(i) });
       legend.append("text")
         .attr("class", "label")
         .attr("x", 20)
@@ -135,8 +138,9 @@ LisSearch.soybasesController = Ember.ResourceController.create({
   }.property('graph'),
 
   icicle: function() {
+    var self = this;
 
-    var groups = this.formatData(this.get('content'));
+    var groups = self.formatData(self.get('content'));
 
     var width = 800,
       height = 250;
@@ -147,8 +151,6 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     var y = d3.scale.linear()
       .range([0, height]);
 
-    var color = d3.scale.category20c();
-
     var vis = d3.select(".results:last-child").append("svg")
       .attr("width", width)
       .attr("height", height);
@@ -156,25 +158,35 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     var partition = d3.layout.partition()
       .value(function(d) { return d.size; });
 
-    var rect = vis.data([groups]).selectAll("rect")
+    var rects = vis.data([groups]).selectAll("g")
       .data(partition.nodes)
-      .enter().append("rect")
+      .enter().append("g")
+      .attr("class", "rect")
+      .append("rect")
       .attr("x", function(d) { return x(d.x); })
       .attr("y", function(d) { return y(d.y); })
       .attr("width", function(d) { return x(d.dx); })
       .attr("height", function(d) { return y(d.dy); })
-      .attr("fill", function(d) { return color((d.children ? d : d.parent).name); })
+      .attr("fill", function(d) { return self.color((d.children ? d : d.parent).name); })
       .on("click", function(d) {
         x.domain([d.x, d.x + d.dx]);
         y.domain([d.y, 1]).range([d.y ? 20 : 0, height]);
 
-        rect.transition()
+        rects.transition()
         .duration(750)
         .attr("x", function(d) { return x(d.x); })
         .attr("y", function(d) { return y(d.y); })
         .attr("width", function(d) { return x(d.x + d.dx) - x(d.x); })
         .attr("height", function(d) { return y(d.y + d.dy) - y(d.y); });
       });
+
+    vis.selectAll("g")
+      .data(partition.nodes)
+      .append("text")
+      .attr("dy", ".35em")
+      .attr("transform", function(d) { return "translate(10," + d.dx * y(d.dy)/d.dx / 2 + ")" })
+      .style("display", function(d) { return (d.dx * y(d.dy)) > 15 ? null : "none" })
+      .text(function(d) { return d.name });
 
   }.property('icicle')
 });

@@ -36,8 +36,6 @@ LisSearch.soybasesController = Ember.ResourceController.create({
 
     var vis = d3.select("#search-results").append("div")
       .attr("class", "results")
-      //.attr("title", "Click to remove")
-      //.on("click", function() { $(this).slideUp('slow'); })
       .append("svg")
       .attr("class", "graph")
       .data([data])

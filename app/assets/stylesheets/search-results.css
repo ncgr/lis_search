@@ -18,6 +18,7 @@
 }
 
 .total-label {
+  color: gray;
   fill: gray;
   font-size: 22px;
   font-weight: bold;

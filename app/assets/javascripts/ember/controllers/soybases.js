@@ -135,7 +135,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       "children": []
     };
 
-    groups = _.groupBy(data, function(g) {
+    var groups = _.groupBy(data, function(g) {
       return g.trait_name.toLowerCase().underscore();
     });
 

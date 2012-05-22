@@ -1,5 +1,5 @@
 #search-results {
-  width: 800px;
+  width: 1100px;
 }
 
 .results {
@@ -7,7 +7,7 @@
   clear: both;
 }
 
-.graph svg {
+.pie svg {
   width: 450px;
   float: left;
 }
@@ -40,16 +40,14 @@
   font-size: 12px;
 }
 
-.legend {
+.pie-legend {
+  padding-right: 300px;
   margin-top: 125px;
   float: right;
 }
 
-.chart {
-  display: block;
-  margin: auto;
-  margin-top: 60px;
-  font-size: 11px;
+.icicle {
+  clear: both;
 }
 
 .icicle rect {

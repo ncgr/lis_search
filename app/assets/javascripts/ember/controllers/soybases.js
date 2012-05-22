@@ -13,7 +13,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
 
   color: d3.scale.category20(),
 
-  graph: function() {
+  pie: function() {
     var self = this;
 
     var data = self.get('content');
@@ -51,7 +51,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     var vis = d3.select("#search-results").append("div")
       .attr("class", "results")
       .append("svg")
-      .attr("class", "graph")
+      .attr("class", "pie")
       .data([data])
       .attr("width", width)
       .attr("height", height);
@@ -94,7 +94,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       });
 
     var legend = d3.select(".results:last-child").append("svg")
-      .attr("class", "legend")
+      .attr("class", "pie-legend")
       .data([data])
       .attr("width", 325);
 
@@ -112,9 +112,9 @@ LisSearch.soybasesController = Ember.ResourceController.create({
         .text(function(d, k) { return sliceNames[i]; });
     }
 
-  }.property('graph'),
+  }.property('pie'),
 
-  formatLinkageGroup: function(data) {
+  formatIcicleLinkageGroup: function(data) {
     var lg = [];
     var g = _.groupBy(data, function(d) { return d.map[0].linkage_group; });
     _.each(g, function(v, k) {
@@ -127,7 +127,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     return lg;
   },
 
-  formatData: function(data) {
+  formatIcicleData: function(data) {
     var self = this;
 
     var formatted = {
@@ -142,7 +142,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     _.each(groups, function(v, k) {
      formatted["children"].push({
        "name": k,
-       "children": self.formatLinkageGroup(v)
+       "children": self.formatIcicleLinkageGroup(v)
      });
     });
 
@@ -159,9 +159,9 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       return;
     }
 
-    var groups = self.formatData(data);
+    var groups = self.formatIcicleData(data);
 
-    var width = 800,
+    var width = 1100,
         height = 600,
         x = d3.scale.linear().range([0, width]),
         y = d3.scale.linear().range([0, height]);
@@ -228,4 +228,5 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     }
 
   }.property('icicle')
+
 });

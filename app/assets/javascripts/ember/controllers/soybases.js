@@ -13,7 +13,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
 
   color: d3.scale.category20(),
 
-  graph: function() {
+  pie: function() {
     var self = this;
 
     var data = self.get('content');
@@ -51,7 +51,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     var vis = d3.select("#search-results").append("div")
       .attr("class", "results")
       .append("svg")
-      .attr("class", "graph")
+      .attr("class", "pie")
       .data([data])
       .attr("width", width)
       .attr("height", height);
@@ -94,7 +94,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       });
 
     var legend = d3.select(".results:last-child").append("svg")
-      .attr("class", "legend")
+      .attr("class", "pie-legend")
       .data([data])
       .attr("width", 325);
 
@@ -112,9 +112,9 @@ LisSearch.soybasesController = Ember.ResourceController.create({
         .text(function(d, k) { return sliceNames[i]; });
     }
 
-  }.property('graph'),
+  }.property('pie'),
 
-  formatLinkageGroup: function(data) {
+  formatIcicleLinkageGroup: function(data) {
     var lg = [];
     var g = _.groupBy(data, function(d) { return d.map[0].linkage_group; });
     _.each(g, function(v, k) {
@@ -127,7 +127,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     return lg;
   },
 
-  formatData: function(data) {
+  formatIcicleData: function(data) {
     var self = this;
 
     var formatted = {
@@ -142,7 +142,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     _.each(groups, function(v, k) {
      formatted["children"].push({
        "name": k,
-       "children": self.formatLinkageGroup(v)
+       "children": self.formatIcicleLinkageGroup(v)
      });
     });
 
@@ -159,9 +159,9 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       return;
     }
 
-    var groups = self.formatData(data);
+    var groups = self.formatIcicleData(data);
 
-    var width = 800,
+    var width = 1100,
         height = 600,
         x = d3.scale.linear().range([0, width]),
         y = d3.scale.linear().range([0, height]);
@@ -227,5 +227,158 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       return "translate(8," + d.dx * ky / 2 + ")";
     }
 
-  }.property('icicle')
+  }.property('icicle'),
+
+  formatGdData: function(data) {
+
+    var trait_names = _.keys(_.groupBy(data, function(d) {
+      return d.trait_name.toLowerCase() === "" ? "unknown" : d.trait_name.toLowerCase();
+    }));
+
+    var linkage_groups = _.keys(_.groupBy(data, function(d) { return d.map[0].linkage_group; }));
+
+    var obj = {};
+    obj["trait_names"] = trait_names;
+    obj["linkage_groups"] = linkage_groups;
+    obj["values"] = [];
+
+    _.each(data, function(d) {
+      var values = {};
+      values["trait_name"] = d.trait_name.toLowerCase() === "" ? "unknown" : d.trait_name.toLowerCase();
+      _.each(linkage_groups, function(l) {
+        if (d.map[0].linkage_group === l) {
+          values[l] = Math.abs(d.map[0].map_position[0].start_pos - d.map[0].map_position[0].end_pos);
+        } else {
+          values[l] = 0.0;
+        }
+      });
+      obj["values"].push(values);
+    });
+
+    console.log(obj);
+    return obj;
+  },
+
+  genomicDistribution: function() {
+
+    var self = this;
+
+    var data = self.get('content');
+
+    if (_.keys(data).length === 0) {
+      return;
+    }
+
+    var maps = self.formatGdData(data);
+
+    var size = 100,
+        padding = 10,
+        n = maps.linkage_groups.length;
+
+    var x = {}, y = {};
+
+    maps.linkage_groups.forEach(function(group) {
+      var value = function(d) { return d[group] },
+          domain = [d3.min(maps.values, value), d3.max(maps.values, value)],
+          range = [padding / 2, size - padding / 2];
+
+      x[group] = d3.scale.linear().domain(domain).range(range);
+      y[group] = d3.scale.linear().domain(domain).range(range.reverse());
+    });
+
+    var brushstart = function(p) {
+      if (brush.data !== p) {
+        cell.call(brush.clear());
+        brush.x(x[p.x]).y(y[p.y]).data = p;
+      }
+    }
+
+    var brush = function(p) {
+      var e = brush.extent();
+      svg.selectAll("circle").attr("class", function(d) {
+        return e[0][0] <= d[p.x] && d[p.x] <= e[1][0]
+          && e[0][1] <= d[p.y] && d[p.y] <= e[1][1]
+          ? d.trait_name : null;
+      });
+    }
+
+    var brushend = function() {
+      if (brush.empty()) {
+        svg.selectAll("circle").attr("class", function(d) {
+          return d.trait_name;
+        });
+      }
+    }
+
+    var cross = function(a, b) {
+      var c = [],
+          max = a.length,
+          i = 0,
+          j = 0,
+          k = 0;
+      for (i = 0; i < max; i += 1) {
+        c.push({ x: a[i], i: k, y: b[i], j: j });
+        k += 1;
+        if (i > 0 && i % (padding - 1) === 0) {
+          j += 1;
+          k = 0;
+        }
+      }
+      return c;
+    }
+
+    var axis = d3.svg.axis()
+      .ticks(5)
+      .tickSize(size * n);
+
+    var brush = d3.svg.brush()
+      .on("brushstart", brushstart)
+      .on("brush", brush)
+      .on("brushend", brushend);
+
+    var svg = d3.select(".results:last-child").append("svg")
+      .attr("class", "scatter")
+      .attr("width", 1100)
+      .attr("height", 600);
+
+    var cell = svg.selectAll("g.cell")
+      .data(cross(maps.linkage_groups, maps.linkage_groups))
+      .enter().append("g")
+      .attr("class", "cell")
+      .attr("transform", function(d) { return "translate(" + d.i * size + "," + d.j * size + ")"; })
+      .each(function(p) {
+        var cell = d3.select(this);
+
+        cell.append("rect")
+          .attr("class", "frame")
+          .attr("x", padding / 2)
+          .attr("y", padding / 2)
+          .attr("width", size - padding)
+          .attr("height", size - padding);
+
+        cell.selectAll("circle")
+          .data(maps.values)
+          .enter().append("circle")
+          .attr("fill", function(d) { return self.color(maps.trait_names.indexOf(d.trait_name)); })
+          .attr("fill-opacity", ".5")
+          .attr("class", function(d) { return d.trait_name; })
+          .attr("cx", function(d) { return x[p.x](d[p.x]); })
+          .attr("cy", function(d) { return y[p.y](d[p.y]); })
+          .attr("r", function(d) {
+            if (x[p.x](d[p.x]) === 5 || x[p.x](d[p.x]) === 95) {
+              return 0;
+            }
+            return 3;
+          });
+
+        cell.call(brush.x(x[p.x]).y(y[p.y]));
+      });
+
+    cell.append("text")
+      .attr("x", padding)
+      .attr("y", padding)
+      .attr("dy", ".71em")
+      .text(function(d) { return d.x; });
+
+  }.property('genomicDistribution')
 });

@@ -20,8 +20,9 @@ LisSearch.SearchSoybasesView = Ember.View.extend({
     }).done(function(data) {
       LisSearch.soybasesController.clearAll();
       LisSearch.soybasesController.loadAll(data);
-      LisSearch.soybasesController.get('graph');
+      LisSearch.soybasesController.get('pie');
       LisSearch.soybasesController.get('icicle');
+      LisSearch.soybasesController.get('genomicDistribution');
     });
   }
 });

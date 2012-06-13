@@ -255,7 +255,6 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       obj["values"].push(values);
     });
 
-    console.log(obj);
     return obj;
   },
 

@@ -1,7 +1,6 @@
-require 'nokogiri'
 require 'uri'
 require 'open-uri'
-require 'web_services/soybase'
+require 'web_services/base'
 
 module WebServices
   class Configuration

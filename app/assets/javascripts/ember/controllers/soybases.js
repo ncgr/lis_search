@@ -43,8 +43,8 @@ LisSearch.soybasesController = Ember.ResourceController.create({
 
         var total = _.reduce(slices, function(memo, num) { return memo + num; }, 0);
 
-        var width = 400,
-            height = 400,
+        var width = 300,
+            height = 300,
             outerRadius = Math.min(width, height) / 2,
             innerRadius = outerRadius * 0.4,
             data = slices,
@@ -354,7 +354,13 @@ LisSearch.soybasesController = Ember.ResourceController.create({
         var svg = d3.select(".results:last-child").append("svg")
           .attr("class", "scatter")
           .attr("width", 1100)
-          .attr("height", 600);
+          .attr("height", function() {
+            var row = 0;
+            for (var i = 0; i < (n / 10); i++) {
+              row += 110;
+            }
+            return row;
+          });
 
         var cell = svg.selectAll("g.cell")
           .data(cross(maps.linkage_groups, maps.linkage_groups))

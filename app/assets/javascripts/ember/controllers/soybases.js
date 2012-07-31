@@ -356,7 +356,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
           .attr("width", 1100)
           .attr("height", function() {
             var row = 0;
-            for (var i = 0; i < (n / 10); i++) {
+            for (var i = 0; i < (n / 9); i++) {
               row += 110;
             }
             return row;

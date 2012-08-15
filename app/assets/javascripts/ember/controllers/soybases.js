@@ -1,12 +1,12 @@
 LisSearch.soybasesController = Ember.ResourceController.create({
   resourceType: LisSearch.Soybase,
 
-  emptyResults: function(name) {
+  emptyResults: function() {
     d3.select("#results-empty").append("div")
       .attr("class", "empty")
       .append("span")
       .attr("class", "total-label")
-      .text("Your search returned 0 QTLs for " + name);
+      .text("Your search returned 0 QTLs");
 
     $(".empty").fadeOut(5000);
   },
@@ -22,7 +22,7 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       _.each(v, function(val, key) {
 
         if (_.keys(val).length === 0) {
-          return self.emptyResults(key);
+          return self.emptyResults();
         }
 
         var groups =  _.groupBy(val, function(s) {
@@ -173,8 +173,6 @@ LisSearch.soybasesController = Ember.ResourceController.create({
       return g.trait_name.toLowerCase();
     });
 
-    console.log(groups);
-
     _.each(groups, function(v, k) {
       formatted["children"].push({
         "name": k,
@@ -192,6 +190,10 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     var data = self.get('content');
 
     var groups = self.formatIcicleData(data);
+
+    if (groups.children.length === 0) {
+      return self.emptyResults();
+    }
 
     var width = 1100,
         height = 600,

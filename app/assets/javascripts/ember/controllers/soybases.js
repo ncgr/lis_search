@@ -133,22 +133,52 @@ LisSearch.soybasesController = Ember.ResourceController.create({
     return lg;
   },
 
-  formatIcicleData: function(data, name) {
-    var self = this;
+  formatIcicleSpecies: function(data) {
+    var self = this,
+      formatted = [];
+
+    var species = _.groupBy(data, 'species');
+
+    _.each(species, function(v, k) {
+      formatted.push({
+        "name": k,
+        "children": self.formatIcicleLinkageGroup(v)
+      });
+    });
+
+    return formatted;
+  },
+
+  formatIcicleData: function(data) {
+    var self = this,
+        results = [],
+        groups;
 
     var formatted = {
-      "name": name + " QTLs",
+      "name": "QTLs",
       "children": []
     };
 
-    var groups = _.groupBy(data, function(g) {
-      return g.trait_name.toLowerCase().underscore();
+    _.each(data, function(v, k) {
+      _.each(v, function(val, key) {
+        if (_.keys(val).length > 0 ) {
+          results.push(val);
+        }
+      });
     });
+
+    results = _.flatten(results, true);
+
+    groups = _.groupBy(results, function(g) {
+      return g.trait_name.toLowerCase();
+    });
+
+    console.log(groups);
 
     _.each(groups, function(v, k) {
       formatted["children"].push({
         "name": k,
-        "children": self.formatIcicleLinkageGroup(v)
+        "children": self.formatIcicleSpecies(v)
       });
     });
 
@@ -161,84 +191,74 @@ LisSearch.soybasesController = Ember.ResourceController.create({
 
     var data = self.get('content');
 
-    _.each(data, function(v, k) {
-      _.each(v, function(val, key) {
+    var groups = self.formatIcicleData(data);
 
-        if (_.keys(val).length === 0) {
-          return;
-        }
+    var width = 1100,
+        height = 600,
+        x = d3.scale.linear().range([0, width]),
+        y = d3.scale.linear().range([0, height]);
 
-        var groups = self.formatIcicleData(val, key);
+    var vis = d3.select(".results:last-child").append("div")
+      .attr("class", "icicle")
+      .style("width", width + "px")
+      .style("height", height + "px")
+      .append("svg:svg")
+      .attr("width", width)
+      .attr("height", height);
 
-        var width = 1100,
-          height = 600,
-          x = d3.scale.linear().range([0, width]),
-          y = d3.scale.linear().range([0, height]);
+    var partition = d3.layout.partition()
+      .value(function(d) { return d.size; });
 
-        var vis = d3.select(".results:last-child").append("div")
-          .attr("class", "icicle")
-          .style("width", width + "px")
-          .style("height", height + "px")
-          .append("svg:svg")
-          .attr("width", width)
-          .attr("height", height);
+    var g = vis.selectAll("g")
+      .data(partition.nodes(groups))
+      .enter().append("svg:g")
+      .attr("class", "icicle-node")
+      .attr("transform", function(d) {
+        return "translate(" + x(d.y) + "," + y(d.x) + ")";
+      })
+      .on("click", click);
 
-        var partition = d3.layout.partition()
-          .value(function(d) { return d.size; });
+    var kx = width / groups.dx,
+        ky = height / 1;
 
-        var g = vis.selectAll("g")
-          .data(partition.nodes(groups))
-          .enter().append("svg:g")
-          .attr("class", "icicle-node")
-          .attr("transform", function(d) {
-            return "translate(" + x(d.y) + "," + y(d.x) + ")";
-          })
-          .on("click", click);
+    g.append("svg:rect")
+      .attr("width", groups.dy * kx)
+      .attr("height", function(d) { return d.dx * ky; })
+      .attr("class", function(d) { return d.children ? "parent" : "child"; })
+      .on("click", function(d) { click(d); });
 
-        var kx = width / groups.dx,
-          ky = height / 1;
+    g.append("svg:text")
+      .attr("transform", function(d) { return "translate(8," + d.dx * ky / 2 + ")"; })
+      .attr("dy", ".35em")
+      .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; })
+      .text(function(d) { return d.name === "" ? "unknown" : d.name.replace("_", " "); });
 
-        g.append("svg:rect")
-          .attr("width", groups.dy * kx)
-          .attr("height", function(d) { return d.dx * ky; })
-          .attr("class", function(d) { return d.children ? "parent" : "child"; })
-          .on("click", function(d) { click(d); });
+    var click = function(d) {
+      if (!d.children) {
+        return;
+      }
 
-        g.append("svg:text")
-          .attr("transform", function(d) { return "translate(8," + d.dx * ky / 2 + ")"; })
-          .attr("dy", ".35em")
-          .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; })
-          .text(function(d) { return d.name === "" ? "unknown" : d.name.replace("_", " "); });
+      kx = (d.y ? width - 40 : width) / (1 - d.y);
+      ky = height / d.dx;
+      x.domain([d.y, 1]).range([d.y ? 40 : 0, width]);
+      y.domain([d.x, d.x + d.dx]);
 
-        var click = function(d) {
-          if (!d.children) {
-            return;
-          }
+      var t = g.transition()
+        .duration(750)
+        .attr("transform", function(d) { return "translate(" + x(d.y) + "," + y(d.x) + ")"; });
 
-          kx = (d.y ? width - 40 : width) / (1 - d.y);
-          ky = height / d.dx;
-          x.domain([d.y, 1]).range([d.y ? 40 : 0, width]);
-          y.domain([d.x, d.x + d.dx]);
+      t.select("rect")
+        .attr("width", d.dy * kx)
+        .attr("height", function(d) { return d.dx * ky; });
 
-          var t = g.transition()
-            .duration(750)
-            .attr("transform", function(d) { return "translate(" + x(d.y) + "," + y(d.x) + ")"; });
+      t.select("text")
+        .attr("transform", transform)
+        .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; });
+    }
 
-          t.select("rect")
-            .attr("width", d.dy * kx)
-            .attr("height", function(d) { return d.dx * ky; });
-
-          t.select("text")
-            .attr("transform", transform)
-            .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; });
-        }
-
-        var transform = function(d) {
-          return "translate(8," + d.dx * ky / 2 + ")";
-        }
-
-      });
-    });
+    var transform = function(d) {
+      return "translate(8," + d.dx * ky / 2 + ")";
+    }
 
   }.property('icicle'),
 

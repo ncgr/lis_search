@@ -12,10 +12,9 @@
 //
 //= require jquery
 //= require jquery_ujs
+//= require jquery-ui
 //= require d3.v2
 //= require underscore
+//= require lks
 //= require twitter/bootstrap
-//= require ember
-//= require ember-rest
-//= require ember/lis_search
 //= require_tree .

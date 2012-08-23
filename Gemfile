@@ -11,7 +11,6 @@ end
 
 gem 'jquery-rails'
 gem 'nokogiri'
-gem 'ember-rails', '0.6.0'
 gem 'twitter-bootstrap-rails'
 
 group :development do

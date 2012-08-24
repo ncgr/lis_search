@@ -41,16 +41,16 @@ LKS.color = LKS.color || d3.scale.category20();
 LKS.species = LKS.species || ["arahy", "phavu", "glyma"];
 
 //
-// Format lod.
+// Format positions.
 //
-LKS.formatLod = function(data) {
+LKS.formatPositions = function(data) {
 
   var self = this,
       lods = [];
 
   _.each(data, function(v, k) {
     _.extend(v, {
-      "name": v.lod ? v.lod : "not defined",
+      "name": v.left_end + " - " + v.right_end,
       "size": 1
     });
   });
@@ -74,7 +74,7 @@ LKS.formatLinkageGroup = function(data) {
     lg.push({
       "name": k,
       "size": v.length,
-      "children": self.formatLod(v)
+      "children": self.formatPositions(v)
     });
   });
 

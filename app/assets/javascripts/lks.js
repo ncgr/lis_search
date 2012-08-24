@@ -26,6 +26,7 @@ LKS.emptyResults = function() {
     .text("Your search returned 0 QTLs");
 
   $(".empty").fadeOut(5000);
+  $("#tools").hide();
 
 };
 
@@ -38,6 +39,25 @@ LKS.color = LKS.color || d3.scale.category20();
 // Known species returned in keyword search.
 //
 LKS.species = LKS.species || ["arahy", "phavu", "glyma"];
+
+//
+// Format lod.
+//
+LKS.formatLod = function(data) {
+
+  var self = this,
+      lods = [];
+
+  _.each(data, function(v, k) {
+    _.extend(v, {
+      "name": v.lod ? v.lod : "not defined",
+      "size": 1
+    });
+  });
+
+  return data;
+
+};
 
 //
 // Format linkage groups.
@@ -53,7 +73,8 @@ LKS.formatLinkageGroup = function(data) {
   _.each(g, function(v, k) {
     lg.push({
       "name": k,
-      "size": v.length
+      "size": v.length,
+      "children": self.formatLod(v)
     });
   });
 
@@ -136,9 +157,11 @@ LKS.formatData = function(data) {
 LKS.renderPartition = function(data) {
 
   var self = this,
+      data = data || self.data,
       results = "#search-results",
       tools = "#tools",
       groups,
+      root,
       vis,
       partition,
       g,
@@ -147,15 +170,13 @@ LKS.renderPartition = function(data) {
       kx,
       ky,
       x = d3.scale.linear().range([0, width]),
-      y = d3.scale.linear().range([0, height]);
-
-  if (_.isNull(data)) {
-    data = self.data;
-  }
-
-  data = self.formatData(data);
+      y = d3.scale.linear().range([0, height]),
+      t,
+      leaf_data = [];
 
   groups = self.formatNestedData(data);
+
+  root = groups;
 
   $(results).empty();
   $(tools).show();
@@ -204,7 +225,8 @@ LKS.renderPartition = function(data) {
       return;
     }
 
-    var t;
+    // Set root to the clicked node for exporting data.
+    root = d;
 
     kx = (d.y ? width - 40 : width) / (1 - d.y);
     ky = height / d.dx;
@@ -228,6 +250,58 @@ LKS.renderPartition = function(data) {
     return "translate(8," + d.dx * ky / 2 + ")";
   }
 
+  // Recursively gather visible node data.
+  function gatherVisibleLeafNodeData(d) {
+    if (d.children) {
+      d.children.forEach(gatherVisibleLeafNodeData);
+    } else {
+      if (_.isArray(leaf_data)) {
+        leaf_data.push(d);
+      } else {
+        leaf_data = [];
+        leaf_data.push(d);
+      }
+    }
+  }
+
+  // Export data set
+  function exportDataSet(type, encode) {
+    var base = self.exportUrls[type],
+        query = "";
+    encode = encode || false;
+    leaf_data = [];
+
+    gatherVisibleLeafNodeData(root);
+
+    query += "algo=" + _.keys(leaf_data).join(",");
+    _.each(leaf_data, function(v, k) {
+      query += "&" + k + "_id=" + v.join(",");
+    });
+
+    // Encode URI.
+    if (encode) {
+      query = query.replace(/[@=&\?]/g, function(c) {
+        var chars = {
+          '&': '%26',
+          '=': '%3D',
+          '?': '%3F',
+          '@': '%40'
+        };
+        return chars[c];
+      });
+    }
+
+    window.open(base + query);
+  }
+
+  $('#table').unbind('click').bind('click', function() {
+    $("#tools button").each(function() {
+      $(this).removeAttr("disabled");
+    });
+    $("#table").attr("disabled", "disabled");
+    gatherVisibleLeafNodeData(root)
+    self.renderTable(leaf_data, false);
+  });
 };
 
 //
@@ -236,18 +310,13 @@ LKS.renderPartition = function(data) {
 LKS.renderTable = function(data) {
 
   var self = this,
+      data = data || self.data,
       template,
       results = $("#search-results"),
       toos = $("#tools");
 
-  if (_.isNull(data)) {
-    data = self.data;
-  }
-
   $(results).empty();
   $(tools).show();
-
-  data = self.formatData(data);
 
   template = _.template(
     $("#table-view").html(), {
@@ -265,6 +334,19 @@ LKS.renderTable = function(data) {
 };
 
 //
+// Remove table row from table view.
+//
+LKS.removeTableRow = function(el) {
+
+  var self = this;
+
+  $(el).parent().slideUp("slow", function() {
+    $(this).remove();
+  });
+
+};
+
+//
 // Render interactive menu.
 //
 LKS.renderMenu = function() {
@@ -274,7 +356,7 @@ LKS.renderMenu = function() {
       loading = $("#menu-loading");
 
   menu.show();
-  loading.empty();
+  loading.hide();
 
 };
 
@@ -286,13 +368,13 @@ LKS.collectResults = function(data) {
 
   var self = this;
 
-  self.data = data;
+  self.data = self.formatData(data);
 
   // Render menu
   self.renderMenu();
 
   // Render view
-  self.renderPartition(data);
+  self.renderPartition(self.data);
 
 };
 

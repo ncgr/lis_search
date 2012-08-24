@@ -111,3 +111,6 @@ circle {
   pointer-events: none;
 }
 
+.remove:hover {
+  cursor: pointer;
+}
